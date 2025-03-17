@@ -1,22 +1,47 @@
-//token : user data sent by backend when user is login 
-//used in login , cart , -----
-//shared token => context =>store of data shared over apllication used in any copmonent (state management)
-//context=>not acceced by any one by when refreshiing data is lost 
-//localStorage=>accesed by any one but keeps data
-//we get use of both
-import {createContext, useEffect, useState } from "react";
-export let AuthContext=createContext()
-function AuthProvider({children}){
-    const [token,setToken]=useState(null)
-    useEffect(function(){
-        if(localStorage.getItem("token")!==null){
-            setToken(localStorage.getItem("token"))
-        }
-    },[])
-    return (
-        <AuthContext.Provider value={{token,setToken}}>
-            {children}
-        </AuthContext.Provider>
-    )
+import React, { useState, createContext } from 'react';
+
+// Create the AuthContext if it doesn't exist
+export const AuthContext = createContext({
+  token: null,
+  user: null,
+  login: () => {},
+  logout: () => {},
+});
+
+export function AuthProvider({ children }) {
+  // Initialize token and user states from localStorage
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || null;
+  });
+
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || null;
+    } catch (error) {
+      console.error('Error parsing user data from localStorage:', error);
+      return null;
+    }
+  });
+
+  // Login function to set token and user data
+  const login = (newToken, userData) => {
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(newToken);
+    setUser(userData);
+  };
+
+  // Logout function to clear token and user data
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ token, user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
-export default AuthProvider
